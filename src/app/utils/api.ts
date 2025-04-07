@@ -475,22 +475,21 @@ export const createOfficeTime = async (
   });
 };
 
-export const updateOfficeTime = async (id: number, data: any, token: string) => {
+// In your api.ts or similar file
+export const updateOfficeTime = async (
+  id: number,
+  data: OfficeTimeData,
+  token: string
+) => {
   const response = await fetch(`/api/officetimes/${id}`, {
-    method: 'PUT',
+    method: "PUT", // Using POST if PUT isn't allowed
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to update office time');
-  }
-
-  return response.json();
+  // ... rest of the function
 };
 export const deleteOfficeTime = async (id: number, token: string) => {
   return fetchData<{ message: string }>(`/officetimes/${id}`, {
