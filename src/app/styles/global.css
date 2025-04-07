@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+* {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Enhanced Scrollbar Styling for Sidebar */
+.sidebar {
+  overflow-y: auto; /* Enable scrolling with visible scrollbar */
+  scrollbar-width: thin; /* Firefox: Thin scrollbar */
+  scrollbar-color: #3B82F6 transparent; /* Firefox: Thumb color (blue) and track color (transparent) */
+}
+
+/* WebKit (Chrome, Safari, Edge) Scrollbar Styling */
+.sidebar::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+  height: 8px; /* Height for horizontal if needed */
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background-color: transparent; /* Transparent track */
+  border-radius: 10px; /* Rounded corners for track */
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #3B82F6; /* Blue thumb color */
+  border-radius: 10px; /* Rounded corners for thumb */
+  transition: background-color 0.3s ease; /* Smooth transition for thumb color */
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: #2563EB; /* Darker blue on hover for a professional touch */
+}
+
+/* Dark and Light Mode for Body and Sidebar */
+body {
+  background-color: #f5f7fa;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode {
+  background-color: #1F2937; /* Dark mode background */
+  color: white;
+}
+
+body.light-mode {
+  background-color: #f5f7fa; /* Light mode background */
+  color: #1F2937;
+}
+
+/* Container Styling for HomePage and General Content */
+.container {
+  max-width: 1280px; /* Professional max-width for large screens */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1rem;
+  transition: padding 0.3s ease;
+}
+
+/* Sidebar Responsive Design */
+@media (min-width: 1025px) { /* Desktop */
+  .sidebar {
+    width: 16rem; /* Default width (w-64) */
+  }
+}
+
+@media (max-width: 1024px) { /* Tablet and smaller desktops */
+  .sidebar {
+    width: 20%; /* Narrower sidebar on tablets */
+  }
+}
+
+@media (max-width: 768px) { /* Mobile devices */
+  .sidebar {
+    width: 100% !important;
+    height: 60px;
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    padding: 0 1rem !important;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for bottom nav */
+  }
+  
+  .sidebar > div {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center;
+  }
+  
+  .sidebar nav,
+  .sidebar button:not(:first-child) {
+    display: none;
+  }
+  
+  main {
+    margin-bottom: 60px; /* Space for bottom navigation */
+  }
+}
+
+@media (max-width: 480px) { /* Smaller mobile devices */
+  .container {
+    padding: 0.5rem; /* Reduced padding on small screens */
+  }
+  
+  .sidebar {
+    height: 50px; /* Slightly smaller bottom nav on very small screens */
+    padding: 0 0.5rem !important;
+  }
+}
+
+/* HomePage and General Content Responsive Design */
+@media (min-width: 1025px) { /* Desktop */
+  .container h1 {
+    font-size: 3rem; /* text-5xl */
+  }
+  
+  .container p {
+    font-size: 1.5rem; /* text-2xl */
+  }
+}
+
+@media (max-width: 1024px) { /* Tablet */
+  .container h1 {
+    font-size: 2.25rem; /* text-3xl */
+  }
+  
+  .container p {
+    font-size: 1.125rem; /* text-lg */
+  }
+}
+
+@media (max-width: 768px) { /* Mobile */
+  .container h1 {
+    font-size: 1.5rem; /* text-2xl */
+  }
+  
+  .container p {
+    font-size: 1rem; /* text-base */
+  }
+}
+
+@media (max-width: 480px) { /* Smaller mobile */
+  .container h1 {
+    font-size: 1.25rem; /* text-xl */
+  }
+  
+  .container p {
+    font-size: 0.875rem; /* text-sm */
+  }
+}
+
+/* Ensure smooth transitions for all responsive changes */
+.sidebar, .container, body {
+  transition: all 0.3s ease;
+}
