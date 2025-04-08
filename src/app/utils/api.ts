@@ -1,7 +1,9 @@
 
 import { API_BASE_URL } from "../constants/apiEndpoints";
 import { City } from "../types/city";
-import { OfficeTime } from "../types/officeTime";
+import { LeaveCategory, PaginatedLeaveCategoriesResponse } from "../types/leaveCategories";
+import { LeaveType, PaginatedApiResponse } from "../types/leaveTypes";
+import { OfficeTime, PaginatedOfficeTimes } from "../types/officeTime";
 // utils/api.ts
 export const fetchData = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -463,7 +465,7 @@ export const createOfficeTime = async (
   token: string
 ) => {
   return fetchData<{
-      error: boolean;
+      // error: boolean;
       error: string; message: string 
 }>("/officetimes/create", {
     method: "POST",
@@ -478,7 +480,7 @@ export const createOfficeTime = async (
 // In your api.ts or similar file
 export const updateOfficeTime = async (
   id: number,
-  data: OfficeTimeData,
+  data: OfficeTime,
   token: string
 ) => {
   const response = await fetch(`/api/officetimes/${id}`, {
@@ -507,4 +509,186 @@ export const getOfficeTime = async (id: number, token: string) => {
       Authorization: `Bearer ${token}`,
     },
   });
+};
+export const getLeaveTypes = async (token: string) => {
+  return fetchData<PaginatedApiResponse>("/leavetypes", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+export const createLeaveType = async (
+  data: { type: string; leave_allowed: number },
+  token: string
+) => {
+  return fetchData<{ message: string }>("/leavetypes/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+};
+
+// In your utils/api.ts
+export const getLeaveType = async (id: number, token: string) => {
+  const response = await fetch(`${API_BASE_URL}/leavetypes/${id}/edit`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch leave type");
+  }
+
+  const result = await response.json();
+  if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
+    throw new Error("Leave type data not found in response");
+  }
+
+  return result.data[0]; // Return the first item in the data array
+};
+
+export const updateLeaveType = async (
+  id: number,
+  data: { type: string; leave_allowed: number },
+  token: string
+) => {
+  const response = await fetch(`${API_BASE_URL}/leavetypes/${id}/edit`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to update leave type");
+  }
+
+  return response.json();
+};
+export const deleteLeaveType = async (id: number, token: string) => {
+  const response = await fetch(`${API_BASE_URL}/leavetypes/${id}`, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to delete leave type");
+  }
+};
+
+
+// Leave Categories CRUD functions
+export const getLeaveCategories = async (token: string): Promise<PaginatedLeaveCategoriesResponse> => {
+  const response = await fetchData<PaginatedLeaveCategoriesResponse>('/leavecategories', {
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return response;
+};
+export const getLeaveCategory = async (id: number, token: string): Promise<LeaveCategory> => {
+  const response = await fetch(`${API_BASE_URL}/leavecategories/${id}/edit`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch leave category");
+  }
+
+  const result = await response.json();
+  console.log("Raw API Response for getLeaveCategory:", result); // Debug log
+
+  let leaveCategoryData;
+  if (result.data) {
+    if (Array.isArray(result.data)) {
+      if (result.data.length === 0) {
+        throw new Error("Leave category data is empty");
+      }
+      leaveCategoryData = result.data[0];
+    } else {
+      leaveCategoryData = result.data;
+    }
+  } else {
+    throw new Error("Leave category data not found in response");
+  }
+
+  if (!leaveCategoryData || !leaveCategoryData.category) {
+    throw new Error("Leave category data is incomplete");
+  }
+
+  return leaveCategoryData;
+};
+
+export const createLeaveCategory = async (category: Omit<LeaveCategory, 'id'>, token: string): Promise<LeaveCategory> => {
+  const response = await fetchData<{ data: LeaveCategory }>('/leavecategories/create', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(category),
+  });
+  return response.data;
+};
+
+export const updateLeaveCategory = async (
+  id: number,
+  data: { category: string; duration: number },
+  token: string
+): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/leavecategories/${id}/edit`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(JSON.stringify(errorData));
+  }
+};
+
+export const deleteLeaveCategory = async (id: number, token: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/leavecategories/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to delete leave category');
+  }
 };

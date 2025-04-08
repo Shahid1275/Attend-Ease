@@ -1,4 +1,5 @@
 export interface OfficeTime {
+    length: number;
     id: number;
     day: string;
     is_working_day: number; // 1 for true, 0 for false
