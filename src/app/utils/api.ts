@@ -1,6 +1,8 @@
 
 import { API_BASE_URL } from "../constants/apiEndpoints";
 import { City } from "../types/city";
+import { PaginatedDegreeProgramResponse } from "../types/degreeProgram";
+import { Device, PaginatedDevicesResponse } from "../types/devices";
 import { LeaveCategory, PaginatedLeaveCategoriesResponse } from "../types/leaveCategories";
 import { LeaveType, PaginatedApiResponse } from "../types/leaveTypes";
 import { OfficeTime, PaginatedOfficeTimes } from "../types/officeTime";
@@ -692,3 +694,203 @@ export const deleteLeaveCategory = async (id: number, token: string): Promise<vo
     throw new Error(errorData.message || 'Failed to delete leave category');
   }
 };
+
+
+// export const fetchDevices = async (url: string, options: RequestInit = {}): Promise<PaginatedDevicesResponse> => {
+//   const response = await fetch(url, options);
+//   if (!response.ok) {
+//     throw new Error(`HTTP error! status: ${response.status}`);
+//   }
+//   return await response.json();
+// };
+
+// export const deleteDevice = async (id: number, token: string): Promise<void> => {
+//   const response = await fetch(`/api/devices/${id}`, {
+//     method: 'DELETE',
+//     headers: {
+//       'Accept': 'application/json',
+//       'Authorization': `Bearer ${token}`,
+//     },
+//   });
+//   if (!response.ok) {
+//     const errorData = await response.json();
+//     throw new Error(errorData.message || 'Failed to delete device');
+//   }
+// };
+
+
+ 
+// utils/api.ts
+export const getDevices = async (token: string): Promise<PaginatedDevicesResponse> => {
+  const response = await fetchData<PaginatedDevicesResponse>('/devices', {
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return response;
+};
+
+export const getDevice = async (id: number, token: string): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/devices/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+export const createDevice = async (device: Omit<Device, 'id'>, token: string): Promise<Device> => {
+  const response = await fetchData<{ data: Device }>('/devices/create', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(device),
+  });
+  return response.data;
+};
+
+export const updateDevice = async (
+  id: number,
+  data: Partial<Device>,
+  token: string
+): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/devices/${id}/edit`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(JSON.stringify(errorData));
+  }
+};
+
+export const deleteDevice = async (id: number, token: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/devices/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to delete device');
+  }
+};
+
+export const getDegreePrograms = async (token: string) => {
+  return fetchData<PaginatedDegreeProgramResponse>("/degreeprograms", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+export const createDegreeProgram = async (
+  data: { program_name: string },
+  token: string
+) => {
+  return fetchData<{ message: string }>("/degreeprograms/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+};
+
+export const getDegreeProgram = async (id: number, token: string) => {
+  const response = await fetch(`${API_BASE_URL}/degreeprograms/${id}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch degree program");
+  }
+
+  const result = await response.json();
+  if (!result.data || typeof result.data !== "object" || !result.data.program_name) {
+    throw new Error("Degree program data not found in response");
+  }
+
+  return result.data; // Return the data object directly
+};
+export const updateDegreeProgram = async (
+  id: number,
+  data: { program_name: string },
+  token: string
+) => {
+  const response = await fetch(`${API_BASE_URL}/degreeprograms/${id}/edit`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to update degree program");
+  }
+
+  return response.json();
+};
+
+export const deleteDegreeProgram = async (id: number, token: string) => {
+  const response = await fetch(`${API_BASE_URL}/degreeprograms/${id}`, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to delete degree program");
+  }
+};
+
+export const getDegreeProgramByName = async (name: string, token: string) => {
+  const response = await fetch(`${API_BASE_URL}/degreeprograms/name/${encodeURIComponent(name)}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch degree program by name");
+  }
+
+  return response.json();
+};
+
+export { PaginatedDegreeProgramResponse };
