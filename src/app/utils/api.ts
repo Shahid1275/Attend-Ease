@@ -6,6 +6,7 @@ import { Device, PaginatedDevicesResponse } from "../types/devices";
 import { LeaveCategory, PaginatedLeaveCategoriesResponse } from "../types/leaveCategories";
 import { LeaveType, PaginatedApiResponse } from "../types/leaveTypes";
 import { OfficeTime, PaginatedOfficeTimes } from "../types/officeTime";
+import { Permission } from "../types/permissionTypes";
 // utils/api.ts
 export const fetchData = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -893,4 +894,187 @@ export const getDegreeProgramByName = async (name: string, token: string) => {
   return response.json();
 };
 
-export { PaginatedDegreeProgramResponse };
+export type { PaginatedDegreeProgramResponse };
+// src/utils/permissionApi.ts
+export const fetchPermissions = async (token: string, page: number = 1) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/permissions?page=${page}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch permissions');
+    }
+
+    const data = await response.json();
+    
+    // Ensure the response has the expected structure
+    if (!data || !Array.isArray(data.data)) {
+      throw new Error('Invalid permissions data format');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching permissions:', error);
+    throw error;
+  }
+};
+
+export const fetchRoles = async (token: string, page: number = 1) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/roles?page=${page}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch roles');
+    }
+
+    const data = await response.json();
+    
+    // Ensure the response has the expected structure
+    if (!data || !Array.isArray(data.data)) {
+      throw new Error('Invalid roles data format');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching roles:', error);
+    throw error;
+  }
+};
+
+export const getLocations = async (token: string, page = 1) => {
+  const response = await fetch(`${API_BASE_URL}/locations?page=${page}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch locations");
+  }
+
+  return response.json() as Promise<PaginatedApiResponse>;
+};
+
+export const getLocation = async (id: number, token: string) => {
+  const response = await fetch(`${API_BASE_URL}/locations/${id}/edit`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch location");
+  }
+
+  const result = await response.json();
+  if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
+    throw new Error("Location data not found in response");
+  }
+
+  return result.data[0] as Location;
+};
+
+export const createLocation = async (
+  data: {
+    city_id: number;
+    title: string;
+    address: string;
+    contact_no: string;
+    is_active: number;
+  },
+  token: string
+) => {
+  const response = await fetch(`${API_BASE_URL}/locations/create`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to create location");
+  }
+
+  return response.json();
+};
+
+export const updateLocation = async (
+  id: number,
+  data: {
+    city_id: number;
+    title: string;
+    address: string;
+    contact_no: string;
+    is_active: number;
+  },
+  token: string
+) => {
+  const response = await fetch(`${API_BASE_URL}/locations/${id}/edit`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to update location");
+  }
+
+  return response.json();
+};
+
+export const deleteLocation = async (id: number, token: string) => {
+  const response = await fetch(`${API_BASE_URL}/locations/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to delete location");
+  }
+};
+
+export const getLocationByName = async (name: string, token: string) => {
+  const response = await fetch(`${API_BASE_URL}/locations/name/${name}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch location by name");
+  }
+
+  return response.json();
+};

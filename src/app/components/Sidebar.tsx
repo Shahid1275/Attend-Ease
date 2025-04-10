@@ -347,7 +347,7 @@ const modules = [
   { name: "Leave", icon: <FileAltIcon />, path: "/leave" },
   { name: "LeaveCategory", icon: <FolderIcon />, path: "/leavecategories" },
   { name: "LeaveType", icon: <ClockIcon />, path: "/leavetypes" },
-  { name: "Location", icon: <MapMarkerAltIcon />, path: "/location" },
+  { name: "Location", icon: <MapMarkerAltIcon />, path: "/locations" },
   { name: "OfficeTime", icon: <BusinessTimeIcon />, path: "/officetimes" },
   { name: "Permissions", icon: <LockIcon />, path: "/permissions" },
   { name: "Project", icon: <ProjectDiagramIcon />, path: "/project" },
