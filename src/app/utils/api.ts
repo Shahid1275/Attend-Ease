@@ -955,23 +955,16 @@ export const fetchRoles = async (token: string, page: number = 1) => {
 };
 
 export const getLocations = async (token: string, page = 1) => {
-  const response = await fetch(`${API_BASE_URL}/locations?page=${page}`, {
+  return fetchData<PaginatedApiResponse>(`/locations?page=${page}`, {
     headers: {
       Authorization: `Bearer ${token}`,
-      Accept: "application/json",
     },
   });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to fetch locations");
-  }
-
-  return response.json() as Promise<PaginatedApiResponse>;
 };
 
-export const getLocation = async (id: number, token: string) => {
+export const getLocation = async (id: number, token: string): Promise<Location> => {
   const response = await fetch(`${API_BASE_URL}/locations/${id}/edit`, {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
@@ -984,11 +977,58 @@ export const getLocation = async (id: number, token: string) => {
   }
 
   const result = await response.json();
-  if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
-    throw new Error("Location data not found in response");
+  
+  // Handle different response structures
+  if (result.data) {
+    if (Array.isArray(result.data) ){
+      if (result.data.length === 0) {
+        throw new Error("Location not found");
+      }
+      return result.data[0];
+    }
+    return result.data;
+  }
+  
+  throw new Error("Invalid location data format");
+};
+
+
+
+
+export const updateLocation = async (
+  id: number,
+  data: {
+    city_id: number;
+    title: string;
+    address: string;
+    contact_no: string;
+    is_active: boolean;
+  },
+  token: string
+) => {
+  const response = await fetch(`${API_BASE_URL}/locations/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      ...data,
+      is_active: data.is_active ? 1 : 0,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    if (errorData.errors) {
+      const errorMessages = Object.values(errorData.errors).flat().join(", ");
+      throw new Error(errorMessages);
+    }
+    throw new Error(errorData.message || "Failed to update location");
   }
 
-  return result.data[0] as Location;
+  return await response.json();
 };
 
 export const createLocation = async (
@@ -997,7 +1037,7 @@ export const createLocation = async (
     title: string;
     address: string;
     contact_no: string;
-    is_active: number;
+    is_active: boolean;
   },
   token: string
 ) => {
@@ -1008,46 +1048,23 @@ export const createLocation = async (
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      ...data,
+      is_active: data.is_active ? 1 : 0,
+    }),
   });
 
   if (!response.ok) {
     const errorData = await response.json();
+    if (errorData.errors) {
+      const errorMessages = Object.values(errorData.errors).flat().join(", ");
+      throw new Error(errorMessages);
+    }
     throw new Error(errorData.message || "Failed to create location");
   }
 
-  return response.json();
+  return await response.json();
 };
-
-export const updateLocation = async (
-  id: number,
-  data: {
-    city_id: number;
-    title: string;
-    address: string;
-    contact_no: string;
-    is_active: number;
-  },
-  token: string
-) => {
-  const response = await fetch(`${API_BASE_URL}/locations/${id}/edit`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to update location");
-  }
-
-  return response.json();
-};
-
 export const deleteLocation = async (id: number, token: string) => {
   const response = await fetch(`${API_BASE_URL}/locations/${id}`, {
     method: "DELETE",
@@ -1061,6 +1078,8 @@ export const deleteLocation = async (id: number, token: string) => {
     const errorData = await response.json();
     throw new Error(errorData.message || "Failed to delete location");
   }
+
+  return true;
 };
 
 export const getLocationByName = async (name: string, token: string) => {
