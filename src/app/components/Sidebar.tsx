@@ -353,7 +353,7 @@ const modules = [
   { name: "Project", icon: <ProjectDiagramIcon />, path: "/project" },
   { name: "Province", icon: <MapIcon />, path: "/provinces" },
   { name: "Roles", icon: <UserTagIcon />, path: "/roles" },
-  { name: "Student", icon: <UserGraduateIcon />, path: "/student" },
+  { name: "Student", icon: <UserGraduateIcon />, path: "/students" },
   { name: "StudentStatus", icon: <UserCheckIcon />, path: "/studentstatus" },
   { name: "User", icon: <UserIcon />, path: "/user" },
   { name: "Logout", icon: <SignOutAltIcon />, isLogout: true },

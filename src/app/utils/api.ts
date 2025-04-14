@@ -7,40 +7,65 @@ import { LeaveCategory, PaginatedLeaveCategoriesResponse } from "../types/leaveC
 import { LeaveType, PaginatedApiResponse } from "../types/leaveTypes";
 import { OfficeTime, PaginatedOfficeTimes } from "../types/officeTime";
 import { Permission } from "../types/permissionTypes";
+import { PaginatedStudentResponse, Student, StudentResponse } from "../types/student";
 // utils/api.ts
-export const fetchData = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const response = await fetch(url, options);
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error("Resource not found");
-    }
-    const errorData = await response.json();
-    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.message || "Unknown error"}`);
-  }
-
-  return response.json();
-};
-// Fetch data utility function
 // export const fetchData = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
 //   const url = `${API_BASE_URL}${endpoint}`;
 //   const response = await fetch(url, options);
 
 //   if (!response.ok) {
+//     if (response.status === 404) {
+//       throw new Error("Resource not found");
+//     }
 //     const errorData = await response.json();
-//     console.error("API Error Details:", {
-//       status: response.status,
-//       statusText: response.statusText,
-//       url: response.url,
-//       errorData,
-//     });
 //     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.message || "Unknown error"}`);
 //   }
 
 //   return response.json();
 // };
-// Create a new province
+
+export const fetchData = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+  try {
+    const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...options.headers, 
+      },
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP error! Status: ${response.status}`;
+
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+
+        // Handle Laravel validation errors
+        if (errorData.errors && typeof errorData.errors === "object") {
+          const validationErrors = Object.entries(errorData.errors)
+            .map(([field, messages]) => `${field}: ${(messages as string[]).join(", ")}`)
+            .join("; ");
+          errorMessage += ` (Validation errors: ${validationErrors})`;
+        }
+      } catch (e) {
+        errorMessage += ` - Unable to parse error response`;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    // Debug: Log the raw response for troubleshooting
+    console.log(`Raw API response for ${endpoint}:`, data);
+    return data as T;
+  } catch (error) {
+    console.error(`API request failed for ${endpoint}:`, error);
+    throw error instanceof Error ? error : new Error("Network request failed");
+  }
+};
 export const createProvince = async (data: { name: string }, token: string) => {
   return fetchData<{ message: string }>("/provinces/create", {
     method: "POST",
@@ -1096,4 +1121,145 @@ export const getLocationByName = async (name: string, token: string) => {
   }
 
   return response.json();
+};
+
+
+export const getStudents = async (token: string): Promise<PaginatedStudentResponse> => {
+  try {
+    const response = await fetchData<PaginatedStudentResponse>("/students", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+
+    // Debug: Log the raw response to inspect its structure
+    console.log("Raw API response in getStudents:", response);
+
+    // Case 1: Expected paginated response { current_page, data: [...], ... }
+    if (response && typeof response === "object" && Array.isArray(response.data)) {
+      return response as PaginatedStudentResponse;
+    }
+
+    // Case 2: Unexpected array response [{...}, {...}]
+    if (Array.isArray(response)) {
+      console.warn("Received array instead of paginated response, normalizing...");
+      return {
+        current_page: 1,
+        data: response, // Use the array as the data field
+        total: response.length,
+        per_page: response.length,
+        last_page: 1,
+        first_page_url: "",
+        last_page_url: "",
+        next_page_url: null,
+        prev_page_url: null,
+        path: "",
+        from: 1,
+        to: response.length,
+        links: [],
+      };
+    }
+
+    // Case 3: Invalid response
+    throw new Error(
+      "Invalid response format: Expected a paginated response with a 'data' array or an array of students."
+    );
+  } catch (error) {
+    console.error("Failed to fetch students:", error);
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "An unexpected error occurred while fetching students."
+    );
+  }
+};
+
+export const createStudent = async (data: Omit<Student, "id">, token: string) => {
+  return fetchData<{ message: string; student: Student }>("/students/create", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+};
+
+export const getStudent = async (id: number, token: string): Promise<{ student: Student; location: string }> => {
+  try {
+    const response = await fetchData<StudentResponse>(`/students/${id}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Debug: Log the raw response
+    console.log(`Raw API response for /students/${id}:`, response);
+
+    // Validate response structure
+    if (
+      !response ||
+      typeof response !== "object" ||
+      !response.data ||
+      typeof response.data !== "object" ||
+      !Array.isArray(response.data.student) ||
+      typeof response.data.location !== "string"
+    ) {
+      throw new Error("Invalid response format: Expected { data: { student: array, location: string } }");
+    }
+
+    // Check if the student array is empty
+    if (response.data.student.length === 0) {
+      throw new Error(`No student found for ID ${id}`);
+    }
+
+    // Return the first student and location
+    return {
+      student: response.data.student[0],
+      location: response.data.location,
+    };
+  } catch (error) {
+    console.error(`Failed to fetch student with ID ${id}:`, error);
+    throw error instanceof Error ? error : new Error("Failed to fetch student details");
+  }
+};
+export const updateStudent = async (
+  id: number,
+  data: Partial<Student> & {
+    student_status_id: number;
+    location_id: number;
+    degree_program_id: number;
+    batch_id: number;
+  },
+  token: string
+): Promise<{ message: string; student: Student }> => {
+  try {
+    const response = await fetchData<{ message: string; student: Student }>(`/students/${id}/edit`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    return response;
+  } catch (error) {
+    console.error(`Failed to update student with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteStudent = async (id: number, token: string) => {
+  return fetchData<{ message: string }>(`/students/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 };
