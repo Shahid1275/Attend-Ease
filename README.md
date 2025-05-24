@@ -1,6 +1,7 @@
 # 📅 Attendease - Attendance Management System
   
 A streamlined attendance management solution featuring a user interface built on modern web technologies.
+
 🌟 Key Features
 User Portal
 
@@ -25,7 +26,8 @@ cd attendease
 
 Frontend Configuration (./frontend/.env)
 
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+
+NEXT_PUBLIC_API_URL=http://localhost:3000
 
 Running the System
 
